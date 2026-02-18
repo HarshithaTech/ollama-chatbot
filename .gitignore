@@ -10,3 +10,6 @@ env/
 # OS-specific ignore rules
 .DS_Store
 Thumbs.db
+
+# Chat History
+chat_history/
