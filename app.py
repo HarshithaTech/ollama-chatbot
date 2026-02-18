@@ -37,7 +37,20 @@ st.markdown("""
 # Sidebar for settings
 with st.sidebar:
     st.title("⚙️ Settings")
-    selected_model = st.selectbox("Select Model", ["llama3.2", "mistral", "phi3"], index=0)
+    
+    # Dynamically fetch models
+    try:
+        models_info = ollama.list()
+        available_models = [m['name'] for m in models_info['models']]
+        if not available_models:
+            available_models = ["llama3.2"]  # Fallback
+            st.warning("No models found. Showing fallback.")
+    except Exception:
+        available_models = ["llama3.2"]
+        st.info("⚠️ **Note:** Running in limited mode (Cloud or Ollama offline).")
+
+    selected_model = st.selectbox("Select Model", available_models, index=0)
+    
     st.divider()
     if st.button("🗑️ Clear Chat History"):
         st.session_state.messages = []
