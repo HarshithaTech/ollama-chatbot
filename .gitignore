@@ -1,0 +1,12 @@
+# Python-specific ignore rules
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+env/
+
+# OS-specific ignore rules
+.DS_Store
+Thumbs.db
