@@ -8,3 +8,7 @@ langchain-huggingface
 chromadb
 pypdf
 sentence-transformers
+customtkinter
+pillow
+SpeechRecognition
+PyAudio
