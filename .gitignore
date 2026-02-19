@@ -13,3 +13,7 @@ Thumbs.db
 
 # Chat History
 chat_history/
+
+# RAG Database and Uploads
+chroma_db/
+temp_uploads/

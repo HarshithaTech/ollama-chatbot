@@ -1,3 +1,10 @@
 streamlit
 ollama
 streamlit-mic-recorder
+langchain
+langchain-community
+langchain-ollama
+langchain-huggingface
+chromadb
+pypdf
+sentence-transformers

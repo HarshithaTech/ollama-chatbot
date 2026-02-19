@@ -5,9 +5,17 @@ import base64
 import os
 from history_manager import HistoryManager
 from streamlit_mic_recorder import mic_recorder, speech_to_text
+from rag_engine import RAGEngine
 
 # Initialize History Manager
 history_mgr = HistoryManager()
+
+# Initialize RAG Engine
+@st.cache_resource
+def get_rag_engine():
+    return RAGEngine()
+
+rag_engine = get_rag_engine()
 
 # Page configuration
 st.set_page_config(page_title="Ollama", page_icon="🌌", layout="wide")
@@ -270,6 +278,7 @@ if "session_id" not in st.session_state: st.session_state.session_id = history_m
 if "voice_text" not in st.session_state: st.session_state.voice_text = ""
 if "speaking_idx" not in st.session_state: st.session_state.speaking_idx = -1
 if "text_to_speak" not in st.session_state: st.session_state.text_to_speak = None
+if "rag_enabled" not in st.session_state: st.session_state.rag_enabled = False
 
 # Sidebar Content
 with st.sidebar:
@@ -330,7 +339,48 @@ with st.sidebar:
         with ex2:
             st.download_button("Text", tx_data, file_name=f"chat_{st.session_state.session_id}.txt", use_container_width=True)
 
-    st.markdown("<p style='text-align: center; color: var(--text-dim); font-size: 0.7rem; margin-top: 3rem;'>Ollama AI v2.2</p>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; color: var(--text-dim); font-size: 0.7rem; margin-top: 3rem;'>Ollama AI v2.3</p>", unsafe_allow_html=True)
+
+    st.divider()
+    
+    # Knowledge Base Section
+    st.markdown("<p style='color: var(--text-dim); font-size: 0.8rem; margin-top: 1rem; margin-bottom: 0.5rem; font-weight: 600;'>📚 KNOWLEDGE BASE</p>", unsafe_allow_html=True)
+    
+    st.session_state.rag_enabled = st.toggle("Enable RAG", value=st.session_state.rag_enabled)
+    
+    uploaded_files = st.file_uploader("Upload Docs (PDF/TXT)", type=["pdf", "txt"], accept_multiple_files=True)
+    
+    if uploaded_files:
+        if st.button("📥 Process Knowledge"):
+            with st.status("Processing documents...", expanded=True) as status:
+                temp_paths = []
+                for uploaded_file in uploaded_files:
+                    # Save to a temporary file because LangChain loaders need paths
+                    temp_dir = "temp_uploads"
+                    if not os.path.exists(temp_dir):
+                        os.makedirs(temp_dir)
+                    
+                    temp_path = os.path.join(temp_dir, uploaded_file.name)
+                    with open(temp_path, "wb") as f:
+                        f.write(uploaded_file.getbuffer())
+                    temp_paths.append(temp_path)
+                    st.write(f"Reading {uploaded_file.name}...")
+
+                num_splits = rag_engine.add_documents(temp_paths)
+                
+                # Cleanup temp files
+                for p in temp_paths:
+                    if os.path.exists(p):
+                        os.remove(p)
+                
+                status.update(label=f"Done! Created {num_splits} text chunks.", state="complete")
+                st.toast(f"Knowledge Base updated with {len(uploaded_files)} files!")
+
+    if rag_engine.has_knowledge():
+        if st.button("🗑️ Clear Knowledge Base", type="secondary"):
+            rag_engine.clear_database()
+            st.toast("Knowledge Base cleared!")
+            st.rerun()
 
 # ---------------------------------------------------------
 # MAIN CHAT AREA
@@ -440,7 +490,28 @@ if prompt:
             thought.markdown("🤖 *Thinking...*")
             try:
                 full_resp = ""
-                for chunk in ollama.chat(model=selected_model, messages=st.session_state.messages, stream=True):
+                
+                # If RAG is enabled, get context
+                context_prefix = ""
+                if st.session_state.rag_enabled and rag_engine.has_knowledge():
+                    with st.spinner("Searching knowledge base..."):
+                        context = rag_engine.query(prompt)
+                        if context:
+                            context_str = "\n".join(context)
+                            context_prefix = f"Using the following context from the knowledge base to answer the user's question:\n\n{context_str}\n\nUser Question: "
+                
+                # Prepare messages for Ollama (injecting context into the latest user message content)
+                ollama_messages = []
+                for m in st.session_state.messages[:-1]:
+                    ollama_messages.append(m)
+                
+                # Update the last message with context for Ollama only
+                last_msg = st.session_state.messages[-1].copy()
+                if context_prefix:
+                    last_msg["content"] = context_prefix + last_msg["content"]
+                ollama_messages.append(last_msg)
+
+                for chunk in ollama.chat(model=selected_model, messages=ollama_messages, stream=True):
                     full_resp += chunk['message']['content']
                     thought.markdown(full_resp + "▌")
                 thought.markdown(full_resp)
