@@ -71,3 +71,30 @@ class RAGEngine:
 
     def has_knowledge(self):
         return self.vector_store is not None
+
+    def get_uploaded_files(self):
+        if not self.vector_store:
+            return {}
+        try:
+            data = self.vector_store.get()
+            if "metadatas" in data and data["metadatas"]:
+                sources = {}
+                for meta in data["metadatas"]:
+                    if meta and "source" in meta:
+                        basename = os.path.basename(meta["source"])
+                        sources[basename] = meta["source"]
+                return sources
+        except Exception as e:
+            print(f"Error getting sources: {e}")
+        return {}
+
+    def delete_file(self, source_path):
+        if self.vector_store:
+            try:
+                data = self.vector_store.get(where={"source": source_path})
+                if data and "ids" in data and data["ids"]:
+                    self.vector_store.delete(ids=data["ids"])
+                    return True
+            except Exception as e:
+                print(f"Error deleting file {source_path}: {e}")
+        return False

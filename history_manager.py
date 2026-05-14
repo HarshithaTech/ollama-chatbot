@@ -44,6 +44,13 @@ class HistoryManager:
         if os.path.exists(filepath):
             os.remove(filepath)
 
+    def rename_session(self, old_id, new_id):
+        """Renames a session file."""
+        old_path = os.path.join(self.history_dir, f"{old_id}.json")
+        new_path = os.path.join(self.history_dir, f"{new_id}.json")
+        if os.path.exists(old_path):
+            os.rename(old_path, new_path)
+
     def generate_session_id(self):
         """Generates a unique session ID based on timestamp."""
         return datetime.now().strftime("%Y%m%d_%H%M%S")
