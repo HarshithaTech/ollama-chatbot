@@ -171,7 +171,7 @@ class OllamaGUI(ctk.CTk):
             "⚡ Fast Mode (Mistral)": "mistral",
             "🧠 Smart Mode (Llama 3.2)": "llama3.2",
             "📄 Document QA (Llama 3.2 + RAG)": "llama3.2",
-            "💻 Coding Mode (CodeLlama)": "codellama"
+            "💻 Coding Mode (Llama 3.2)": "llama3.2"
         }
         
         self.model_option = ctk.CTkOptionMenu(

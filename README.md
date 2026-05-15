@@ -10,7 +10,7 @@ A privacy-first, fully local desktop chat application that brings the power of L
   - ⚡ **Fast Mode** (`mistral`): Quick and lightweight responses.
   - 🧠 **Smart Mode** (`llama3.2`): Advanced reasoning and logic.
   - 📄 **Document QA** (`llama3.2` + RAG): Automatically toggles Knowledge Base retrieval to answer questions from your documents.
-  - 💻 **Coding Mode** (`codellama`): Optimized specifically for code generation and debugging.
+  - 💻 **Coding Mode** (`llama3.2`): Optimized specifically for code generation and debugging.
 
 ### 2. Retrieval-Augmented Generation (RAG) Knowledge Base
 - **Upload Documents:** Easily upload `.pdf` and `.txt` files directly into the AI's knowledge base.
